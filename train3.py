@@ -89,14 +89,29 @@ print(f"Best Validation Accuracy: {search.best_score_:.2%}")
 
 best_model = search.best_estimator_
 y_pred = best_model.predict(X_test_scaled)
-acc = accuracy_score(y_test_enc, y_pred)
 
-print(f"\nFINAL TEST ACCURACY: {acc:.2%}")
-print(classification_report(y_test_enc, y_pred, target_names=le.classes_))
+print("\n=== CALCULATING SONG-LEVEL ACCURACY ===")
 
-# Save Confusion Matrix for Report
-cm = confusion_matrix(y_test_enc, y_pred)
-plt.figure(figsize=(10, 8))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=le.classes_, yticklabels=le.classes_)
-plt.title(f'Final Ensemble Matrix (Acc: {acc:.2%})')
-plt.savefig('final_ensemble_matrix.png')
+# 1. Create a Results Table
+# We map the predictions back to the filename (e.g., 'blues.00000.wav')
+results_df = pd.DataFrame({
+    'filename': test_df['filename'], 
+    'true_label': y_test,         # The actual text label (e.g., 'blues')
+    'pred_label': le.inverse_transform(y_pred) # Convert 0,1,2 back to 'blues', etc.
+})
+
+# 2. Extract the "Song ID" (Remove the chunk extension if present, though filename is unique per song usually)
+# In your script, 'filename' is 'blues.00000.wav' for all 10 chunks. Perfect.
+# We group by this filename.
+
+# 3. Majority Vote
+song_results = results_df.groupby('filename').agg({
+    'true_label': 'first',              # The true label is constant for the song
+    'pred_label': lambda x: x.mode()[0] # The most frequent predicted label
+})
+
+# 4. Final Score
+final_acc = accuracy_score(song_results['true_label'], song_results['pred_label'])
+
+print(f"Chunk-Level Accuracy (3s): {accuracy_score(y_test, le.inverse_transform(y_pred)):.2%}")
+print(f"Song-Level Accuracy (30s): {final_acc:.2%} <--- THIS IS YOUR REAL SCORE")

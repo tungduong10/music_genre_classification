@@ -5,8 +5,8 @@ import numpy as np
 from tqdm import tqdm
 
 GENRES_DIR = '../genres_original'
-TRAIN_TXT='../julianofoleiss/f1_train.txt'
-TEST_TXT='../julianofoleiss/f1_test.txt'
+TRAIN_TXT='./julianofoleiss/f1_train.txt'
+TEST_TXT='./julianofoleiss/f1_test.txt'
 
 def compute_features(y,sr):
     features={}
